@@ -21,6 +21,7 @@ namespace PJ5_FMSG_Extractor
             reader.BaseStream.Seek(0, SeekOrigin.Begin);
             Header header = new Header();
             header.Magic = reader.ReadInt32();
+            if (header.Magic != 0x47534D46) throw new Exception("Unsupported file type.");
             reader.BaseStream.Position += 4;
             header.StrCount = reader.ReadInt32();
             header.HeaderSize = reader.ReadInt32();
