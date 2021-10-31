@@ -34,6 +34,7 @@ namespace PJ5_FMSG_Extractor
             using (Stream stream = File.OpenRead(input))
             {
                 BinaryReader reader = new BinaryReader(stream);
+                if (reader.BaseStream.Length < 4) return;
                 Header header = ReadHeader(ref reader);
                 reader.BaseStream.Position = header.TextOffset;
                 for (int i = 0; i < header.StrCount; i++)
@@ -48,7 +49,18 @@ namespace PJ5_FMSG_Extractor
                 }
                 reader.Close();
             }
-            File.WriteAllLines(output, result);
+            result.Reverse();
+            //
+            int emptyLine = 0;
+            foreach (var entry in result)
+            {
+                if (entry.Length <= 0) emptyLine++;
+                else break;
+            }
+            result.RemoveRange(0, emptyLine);
+            result.Reverse();
+            
+            if (result.Count > 0) File.WriteAllLines(output, result);
             Console.WriteLine($"Extracted: {Path.GetFileName(output)}");
         }
         public static void Import(string original, string input, string output)
@@ -72,7 +84,7 @@ namespace PJ5_FMSG_Extractor
                         int zeroes = blockLen - (8 + strSize);
                         reader.BaseStream.Position += zeroes;
 
-                        text[i] = text[i].Replace("{LF}", "\n");
+                        text[i] = text[i].Replace("\r", "").Replace("{LF}", "\n");
                         writer.Write(text[i].Length + 1);
                         byte[] newStrBytes = Encoding.Unicode.GetBytes(text[i]);
                         int newBlockLen = 8 + newStrBytes.Length + zeroes;
